@@ -56,8 +56,9 @@ Este projeto foi desenvolvido pela seguinte equipe:
 1.  **Menu Principal:**
     * Pressione **1** para iniciar o jogo.
     * Pressione **2** para visualizar as regras.
-    * Pressione **ESC** para sair.
+    * Pressione **ESC** para fechar o jogo.
+    * Pressione **O** para retornar a tela inicial.
 2.  **Entrada de Nome:** Digite seu nome e pressione **ENTER**.
 3.  **Duelo:** Utilize as teclas `Q`, `W`, `E` e `R` para escolher sua ação antes que o tempo acabe.
 4.  **Fim do Jogo:**
-    * Na tela de pontuação (`SCORE`), pressione **ENTER** para recomeçar o duelo (entrando o nome novamente) ou **O** para voltar ao Menu Principal.
+    * Na tela de pontuação (`SCORE`), pressione **ENTER** para recomeçar o duelo (entrando o nome novamente) ou **p** para pausar o jogo ,e **O** para voltar ao Menu Principal.
