@@ -20,6 +20,7 @@ typedef enum {
 typedef enum {
     MENU_PRINCIPAL,
     ENTRADA_NOME,
+    REGRAS,
     ESPERANDO_007,
     ESCOLHENDO_ACAO,
     PROCESSANDO_TURNO,
@@ -43,6 +44,8 @@ typedef struct {
     int vida;
     Pilha municoes;
     Acao acaoEscolhida;
+    float posX;
+    float posY;
     bool defendendo;
     bool atirando;
     bool carregando;
@@ -187,6 +190,8 @@ void inicializarJogo(Jogo *jogo) {
     jogo->jogador.vida = 3;
     criarPilha(&jogo->jogador.municoes);
     jogo->jogador.acaoEscolhida = NENHUMA;
+    jogo->jogador.posX = 200;
+    jogo->jogador.posY = 400;
     jogo->jogador.defendendo = false;
     jogo->jogador.atirando = false;
     jogo->jogador.carregando = false;
@@ -195,6 +200,8 @@ void inicializarJogo(Jogo *jogo) {
     jogo->computador.vida = 3;
     criarPilha(&jogo->computador.municoes);
     jogo->computador.acaoEscolhida = NENHUMA;
+    jogo->computador.posX = 950;
+    jogo->computador.posY = 400;
     jogo->computador.defendendo = false;
     jogo->computador.atirando = false;
     jogo->computador.carregando = false;
@@ -233,6 +240,54 @@ void resetarJogo(Jogo *jogo) {
     jogo->tempoMensagem = 0;
 }
 
+void desenharCoracao(int x, int y, bool cheio) {
+    Color cor = cheio ? RED : DARKGRAY;
+    
+    DrawCircle(x - 6, y - 3, 8, cor);
+    DrawCircle(x + 6, y - 3, 8, cor);
+    
+    Vector2 pontos[4] = {
+        {(float)(x - 12), (float)(y - 2)},
+        {(float)x, (float)(y + 10)},
+        {(float)(x + 12), (float)(y - 2)},
+        {(float)x, (float)(y - 8)}
+    };
+    
+    DrawTriangle(pontos[0], pontos[1], (Vector2){(float)x, (float)(y - 2)}, cor);
+    DrawTriangle(pontos[2], pontos[1], (Vector2){(float)x, (float)(y - 2)}, cor);
+}
+
+void desenharPersonagem(float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool olharEsquerda) {
+    DrawCircle((int)x, (int)y - 40, 25, cor);
+    DrawRectangle((int)x - 15, (int)y - 15, 30, 50, cor);
+    
+    if (defendendo) {
+        DrawCircle((int)x, (int)y, 35, (Color){100, 100, 255, 150});
+        DrawCircleLines((int)x, (int)y, 35, BLUE);
+        DrawCircleLines((int)x, (int)y, 33, BLUE);
+        DrawRectangle((int)x - 35, (int)y - 5, 25, 8, cor);
+        DrawRectangle((int)x + 10, (int)y - 5, 25, 8, cor);
+    } else if (atirando) {
+        if (olharEsquerda) {
+            DrawRectangle((int)x - 50, (int)y - 10, 40, 8, cor);
+            DrawRectangle((int)x - 70, (int)y - 8, 20, 5, DARKGRAY);
+        } else {
+            DrawRectangle((int)x + 10, (int)y - 10, 40, 8, cor);
+            DrawRectangle((int)x + 50, (int)y - 8, 20, 5, DARKGRAY);
+        }
+    } else if (carregando) {
+        DrawRectangle((int)x - 10, (int)y - 40, 8, 30, cor);
+        DrawRectangle((int)x + 2, (int)y - 40, 8, 30, cor);
+        DrawRectangle((int)x - 5, (int)y - 45, 10, 15, DARKGRAY);
+    } else {
+        DrawRectangle((int)x - 25, (int)y, 15, 8, cor);
+        DrawRectangle((int)x + 10, (int)y, 15, 8, cor);
+    }
+    
+    DrawRectangle((int)x - 10, (int)y + 35, 8, 30, cor);
+    DrawRectangle((int)x + 2, (int)y + 35, 8, 30, cor);
+}
+
 void desenharMenu(Jogo *jogo) {
     (void)jogo;
     ClearBackground((Color){20, 20, 30, 255});
@@ -243,8 +298,11 @@ void desenharMenu(Jogo *jogo) {
     DrawRectangle(SCREEN_WIDTH/2 - 200, 280, 400, 70, DARKGREEN);
     DrawText("1 - JOGAR", SCREEN_WIDTH/2 - 80, 305, 30, WHITE);
     
-    DrawRectangle(SCREEN_WIDTH/2 - 200, 370, 400, 70, MAROON);
-    DrawText("ESC - SAIR", SCREEN_WIDTH/2 - 80, 395, 30, WHITE);
+    DrawRectangle(SCREEN_WIDTH/2 - 200, 370, 400, 70, DARKBLUE);
+    DrawText("2 - REGRAS", SCREEN_WIDTH/2 - 90, 395, 30, WHITE);
+    
+    DrawRectangle(SCREEN_WIDTH/2 - 200, 460, 400, 70, MAROON);
+    DrawText("ESC - SAIR", SCREEN_WIDTH/2 - 80, 485, 30, WHITE);
 }
 
 void desenharEntradaNome(Jogo *jogo) {
@@ -264,8 +322,37 @@ void desenharEntradaNome(Jogo *jogo) {
     DrawText("Pressione ENTER", SCREEN_WIDTH/2 - 100, 450, 22, LIGHTGRAY);
 }
 
+void desenharRegras(Jogo *jogo) {
+    (void)jogo;
+    ClearBackground((Color){25, 25, 35, 255});
+    
+    DrawText("REGRAS DO JOGO 007", SCREEN_WIDTH/2 - 200, 30, 45, GOLD);
+    
+    int y = 100;
+    DrawText("OBJETIVO: Reduzir vida do oponente a ZERO", 100, y, 23, YELLOW);
+    y += 50;
+    
+    DrawText("ACOES:", 100, y, 25, YELLOW);
+    y += 35;
+    DrawText("Q - CARREGAR: +1 bala (maximo 6)", 120, y, 20, WHITE);
+    y += 30;
+    DrawText("W - ATIRAR: Usa 1 bala e ataca", 120, y, 20, WHITE);
+    y += 30;
+    DrawText("E - DEFENDER: Bloqueia ataques", 120, y, 20, WHITE);
+    y += 50;
+    
+    DrawText("Voce tem 2 segundos para escolher!", 100, y, 22, RED);
+    y += 35;
+    DrawText("Se nao escolher, fica vulneravel!", 100, y, 22, RED);
+    
+    DrawRectangle(SCREEN_WIDTH/2 - 150, 620, 300, 50, DARKGREEN);
+    DrawText("O - Menu", SCREEN_WIDTH/2 - 50, 635, 20, WHITE);
+}
+
 void desenharJogo(Jogo *jogo) {
     ClearBackground((Color){35, 35, 45, 255});
+    
+    DrawRectangle(0, 550, SCREEN_WIDTH, 150, (Color){90, 70, 50, 255});
     
     DrawText(TextFormat("RODADA %d", jogo->rodada), SCREEN_WIDTH/2 - 80, 20, 30, YELLOW);
     
@@ -279,13 +366,37 @@ void desenharJogo(Jogo *jogo) {
         DrawText(texto, SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 100, tamanhoTexto, RED);
     }
     
-    DrawText(TextFormat("%s | Vida: %d | Balas: %d", 
-             jogo->jogador.nome, jogo->jogador.vida, tamanho(&jogo->jogador.municoes)), 
-             50, 100, 22, WHITE);
+    DrawRectangle(50, 70, 350, 180, (Color){50, 35, 25, 200});
+    DrawText(jogo->jogador.nome, 120, 80, 24, GOLD);
     
-    DrawText(TextFormat("CPU | Vida: %d | Balas: %d", 
-             jogo->computador.vida, tamanho(&jogo->computador.municoes)), 
-             700, 100, 22, WHITE);
+    DrawText("Vidas:", 70, 110, 22, WHITE);
+    for (int i = 0; i < 3; i++) {
+        desenharCoracao(150 + i * 35, 120, i < jogo->jogador.vida);
+    }
+    
+    DrawText(TextFormat("Balas: %d/%d", tamanho(&jogo->jogador.municoes), MAX_MUNICOES), 
+             70, 150, 22, WHITE);
+    
+    desenharPersonagem(jogo->jogador.posX, jogo->jogador.posY, BLUE, 
+                       jogo->jogador.defendendo, jogo->jogador.atirando, 
+                       jogo->jogador.carregando, false);
+    
+    DrawRectangle(800, 70, 350, 180, (Color){50, 35, 25, 200});
+    DrawText("CPU", 970, 80, 24, GOLD);
+    
+    DrawText("Vidas:", 820, 110, 22, WHITE);
+    for (int i = 0; i < 3; i++) {
+        desenharCoracao(900 + i * 35, 120, i < jogo->computador.vida);
+    }
+    
+    DrawText(TextFormat("Balas: %d/%d", tamanho(&jogo->computador.municoes), MAX_MUNICOES), 
+             820, 150, 22, WHITE);
+    
+    desenharPersonagem(jogo->computador.posX, jogo->computador.posY, RED, 
+                       jogo->computador.defendendo, jogo->computador.atirando, 
+                       jogo->computador.carregando, true);
+    
+    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);
     
     if (jogo->estado == ESCOLHENDO_ACAO && !jogo->jogadorEscolheu) {
         DrawText(TextFormat("Tempo: %.1f s", jogo->tempoContagem), SCREEN_WIDTH/2 - 70, 60, 24, RED);
@@ -301,24 +412,26 @@ void desenharJogo(Jogo *jogo) {
     }
     
     if (jogo->tempoMensagem > 0) {
-        DrawRectangle(SCREEN_WIDTH/2 - 350, 300, 700, 70, (Color){0, 0, 0, 230});
-        DrawText(jogo->mensagem, SCREEN_WIDTH/2 - 330, 315, 26, YELLOW);
+        DrawRectangle(SCREEN_WIDTH/2 - 350, 240, 700, 70, (Color){0, 0, 0, 230});
+        DrawText(jogo->mensagem, SCREEN_WIDTH/2 - 330, 255, 26, YELLOW);
     }
     
     if (jogo->jogador.vida <= 0 || jogo->computador.vida <= 0) {
         if (jogo->jogador.vida > 0) {
-            DrawText("VITORIA!", SCREEN_WIDTH/2 - 120, 400, 60, GREEN);
+            DrawText("VITORIA!", SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2, 60, GREEN);
         } else {
-            DrawText("DERROTA!", SCREEN_WIDTH/2 - 120, 400, 60, RED);
+            DrawText("DERROTA!", SCREEN_WIDTH/2 - 120, SCREEN_HEIGHT/2, 60, RED);
         }
-        DrawText("Pressione O para Menu", SCREEN_WIDTH/2 - 150, 500, 24, WHITE);
+        DrawText("Pressione O para Menu", SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 + 80, 24, WHITE);
     }
+    
+    DrawText("O - Menu", 20, 670, 18, LIGHTGRAY);
 }
 
 int main(void) {
     srand((unsigned int)time(NULL));
     
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Jogo 007 - Commit 2");
+    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Jogo 007 - Commit 3");
     SetTargetFPS(60);
     
     Jogo jogo;
@@ -335,6 +448,9 @@ int main(void) {
             case MENU_PRINCIPAL:
                 if (IsKeyPressed(KEY_ONE)) {
                     jogo.estado = ENTRADA_NOME;
+                }
+                if (IsKeyPressed(KEY_TWO)) {
+                    jogo.estado = REGRAS;
                 }
                 break;
                 
@@ -354,6 +470,10 @@ int main(void) {
                     jogo.nomeInput[jogo.inputIndex] = '\0';
                 }
                 
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
+                }
+                
                 if (IsKeyPressed(KEY_ENTER) && strlen(jogo.nomeInput) > 0) {
                     strcpy(jogo.jogador.nome, jogo.nomeInput);
                     resetarJogo(&jogo);
@@ -362,6 +482,12 @@ int main(void) {
                     jogo.contagemNum = 1;
                 }
             } break;
+                
+            case REGRAS:
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
+                }
+                break;
                 
             case ESPERANDO_007:
                 jogo.tempoContagem -= dt;
@@ -377,6 +503,10 @@ int main(void) {
                         jogo.computador.acaoEscolhida = decidirAcaoComputador(&jogo);
                         jogo.tempoContagem = TEMPO_ESCOLHA;
                     }
+                }
+                
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
                 }
                 break;
                 
@@ -403,12 +533,20 @@ int main(void) {
                     }
                     jogo.estado = PROCESSANDO_TURNO;
                 }
+                
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
+                }
                 break;
                 
             case PROCESSANDO_TURNO:
                 processarTurno(&jogo);
                 jogo.tempoContagem = 2.0f;
                 jogo.estado = JOGANDO;
+                
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
+                }
                 break;
                 
             case JOGANDO:
@@ -425,6 +563,10 @@ int main(void) {
                         jogo.contagemNum = 1;
                     }
                 }
+                
+                if (IsKeyPressed(KEY_O)) {
+                    jogo.estado = MENU_PRINCIPAL;
+                }
                 break;
         }
         
@@ -433,6 +575,7 @@ int main(void) {
         switch (jogo.estado) {
             case MENU_PRINCIPAL: desenharMenu(&jogo); break;
             case ENTRADA_NOME: desenharEntradaNome(&jogo); break;
+            case REGRAS: desenharRegras(&jogo); break;
             default: desenharJogo(&jogo); break;
         }
         
