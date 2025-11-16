@@ -565,16 +565,17 @@ void desenharBala(Jogo *jogo) {
 void desenharPersonagem(Jogo *jogo, float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool superTiro, bool olharEsquerda) {
     Texture2D sprite = olharEsquerda ? jogo->spriteEspiaoEsq : jogo->spriteEspiaoDir;
     
-    float escala = 2.0f;
+    float alturaDesejada = 120.0f;
+    float escala = alturaDesejada / sprite.height;
     float largura = sprite.width * escala;
     float altura = sprite.height * escala;
     
     DrawTextureEx(sprite, (Vector2){x - largura/2, y - altura/2}, 0, escala, WHITE);
     
     if (defendendo) {
-        DrawCircle((int)x, (int)y, 45, (Color){100, 100, 255, 150});
-        DrawCircleLines((int)x, (int)y, 45, BLUE);
-        DrawCircleLines((int)x, (int)y, 43, BLUE);
+        DrawCircle((int)x, (int)y, 60, (Color){100, 100, 255, 150});
+        DrawCircleLines((int)x, (int)y, 60, BLUE);
+        DrawCircleLines((int)x, (int)y, 58, BLUE);
     }
     
     (void)cor;
@@ -828,8 +829,8 @@ int main(void) {
     Jogo jogo;
     inicializarJogo(&jogo);
     
-    jogo.spriteEspiaoDir = LoadTexture("assets/espiao_direita.png");
-    jogo.spriteEspiaoEsq = LoadTexture("assets/espiao_esquerda.png");
+    jogo.spriteEspiaoDir = LoadTexture("assets/espiao_esquerda.png");
+    jogo.spriteEspiaoEsq = LoadTexture("assets/espiao_direita.png");
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
