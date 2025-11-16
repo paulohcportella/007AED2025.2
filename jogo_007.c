@@ -748,7 +748,7 @@ void desenharJogo(Jogo *jogo) {
                        jogo->computador.defendendo, jogo->computador.atirando, 
                        jogo->computador.carregando, jogo->computador.superTiro, true);
     
-    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);
+    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);?
     
     desenharBala(jogo);
     
