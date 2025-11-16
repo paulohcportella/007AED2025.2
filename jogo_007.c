@@ -104,6 +104,8 @@ typedef struct {
     char nomeInput[MAX_NOME];
     int inputIndex;
     bool jogadorEscolheu;
+    Texture2D spriteEspiaoDir;
+    Texture2D spriteEspiaoEsq;
 } Jogo;
 
 typedef struct {
@@ -124,7 +126,7 @@ void desenharRegras(Jogo *jogo);
 void desenharJogo(Jogo *jogo);
 void desenharPausa(Jogo *jogo);
 void desenharScore(Jogo *jogo);
-void desenharPersonagem(float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool superTiro, bool olharEsquerda);
+void desenharPersonagem(Jogo *jogo, float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool superTiro, bool olharEsquerda);
 void desenharCoracao(int x, int y, bool cheio);
 void desenharBala(Jogo *jogo);
 void atualizarBala(Jogo *jogo);
@@ -560,43 +562,25 @@ void desenharBala(Jogo *jogo) {
     }
 }
 
-void desenharPersonagem(float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool superTiro, bool olharEsquerda) {
-    DrawCircle((int)x, (int)y - 40, 25, cor);
-    DrawRectangle((int)x - 15, (int)y - 15, 30, 50, cor);
+void desenharPersonagem(Jogo *jogo, float x, float y, Color cor, bool defendendo, bool atirando, bool carregando, bool superTiro, bool olharEsquerda) {
+    Texture2D sprite = olharEsquerda ? jogo->spriteEspiaoEsq : jogo->spriteEspiaoDir;
+    
+    float escala = 2.0f;
+    float largura = sprite.width * escala;
+    float altura = sprite.height * escala;
+    
+    DrawTextureEx(sprite, (Vector2){x - largura/2, y - altura/2}, 0, escala, WHITE);
     
     if (defendendo) {
-        DrawCircle((int)x, (int)y, 35, (Color){100, 100, 255, 150});
-        DrawCircleLines((int)x, (int)y, 35, BLUE);
-        DrawCircleLines((int)x, (int)y, 33, BLUE);
-        DrawRectangle((int)x - 35, (int)y - 5, 25, 8, cor);
-        DrawRectangle((int)x + 10, (int)y - 5, 25, 8, cor);
-    } else if (superTiro) {
-        if (olharEsquerda) {
-            DrawRectangle((int)x - 60, (int)y - 10, 50, 10, cor);
-            DrawRectangle((int)x - 80, (int)y - 10, 25, 8, ORANGE); // Arma brilhante
-        } else {
-            DrawRectangle((int)x + 10, (int)y - 10, 50, 10, cor);
-            DrawRectangle((int)x + 60, (int)y - 10, 25, 8, ORANGE); // Arma brilhante
-        }
-    } else if (atirando) {
-        if (olharEsquerda) {
-            DrawRectangle((int)x - 50, (int)y - 10, 40, 8, cor);
-            DrawRectangle((int)x - 70, (int)y - 8, 20, 5, DARKGRAY);
-        } else {
-            DrawRectangle((int)x + 10, (int)y - 10, 40, 8, cor);
-            DrawRectangle((int)x + 50, (int)y - 8, 20, 5, DARKGRAY);
-        }
-    } else if (carregando) {
-        DrawRectangle((int)x - 10, (int)y - 40, 8, 30, cor);
-        DrawRectangle((int)x + 2, (int)y - 40, 8, 30, cor);
-        DrawRectangle((int)x - 5, (int)y - 45, 10, 15, DARKGRAY);
-    } else {
-        DrawRectangle((int)x - 25, (int)y, 15, 8, cor);
-        DrawRectangle((int)x + 10, (int)y, 15, 8, cor);
+        DrawCircle((int)x, (int)y, 45, (Color){100, 100, 255, 150});
+        DrawCircleLines((int)x, (int)y, 45, BLUE);
+        DrawCircleLines((int)x, (int)y, 43, BLUE);
     }
     
-    DrawRectangle((int)x - 10, (int)y + 35, 8, 30, cor);
-    DrawRectangle((int)x + 2, (int)y + 35, 8, 30, cor);
+    (void)cor;
+    (void)atirando;
+    (void)carregando;
+    (void)superTiro;
 }
 
 void desenharMenu(Jogo *jogo) {
@@ -729,7 +713,7 @@ void desenharJogo(Jogo *jogo) {
         DrawCircle(250, 188, 5, ORANGE);
     }
     
-    desenharPersonagem(jogo->jogador.posX, jogo->jogador.posY, BLUE, 
+    desenharPersonagem(jogo, jogo->jogador.posX, jogo->jogador.posY, BLUE, 
                        jogo->jogador.defendendo, jogo->jogador.atirando, 
                        jogo->jogador.carregando, jogo->jogador.superTiro, false);
     
@@ -744,11 +728,11 @@ void desenharJogo(Jogo *jogo) {
     DrawText(TextFormat("Balas: %d/%d", tamanho(&jogo->computador.municoes), MAX_MUNICOES), 
              820, 150, 22, WHITE);
     
-    desenharPersonagem(jogo->computador.posX, jogo->computador.posY, RED, 
+    desenharPersonagem(jogo, jogo->computador.posX, jogo->computador.posY, RED, 
                        jogo->computador.defendendo, jogo->computador.atirando, 
                        jogo->computador.carregando, jogo->computador.superTiro, true);
     
-    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);?
+    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);
     
     desenharBala(jogo);
     
@@ -843,6 +827,9 @@ int main(void) {
 
     Jogo jogo;
     inicializarJogo(&jogo);
+    
+    jogo.spriteEspiaoDir = LoadTexture("assets/espiao_direita.png");
+    jogo.spriteEspiaoEsq = LoadTexture("assets/espiao_esquerda.png");
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
@@ -1042,6 +1029,10 @@ int main(void) {
 
     salvarRanking(jogo.rankingHead);
     limparRanking(&jogo.rankingHead);
+    
+    UnloadTexture(jogo.spriteEspiaoDir);
+    UnloadTexture(jogo.spriteEspiaoEsq);
+    
     CloseWindow();
 
     return 0;
