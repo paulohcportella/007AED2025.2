@@ -4,4 +4,4 @@ expertMode = true
 
 [nix]
 channel = "stable-25_05"
-packages = ["raylib", "xorg.libX11", "xorg.libXrandr", "xorg.libXinerama", "xorg.libXcursor", "xorg.libXi", "mesa", "libGL"]
+packages = ["raylib", "xorg.libX11", "xorg.libXrandr", "xorg.libXinerama", "xorg.libXcursor", "xorg.libXi", "mesa", "libGL", "pkg-config", "glfw", "mesa_glu"]

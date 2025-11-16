@@ -940,7 +940,7 @@ int main(void) {
                     if (IsKeyPressed(KEY_E)) {
                         jogo.jogador.acaoEscolhida = DEFENDER;
                         jogo.jogadorEscolheu = true;
-                    }tecla
+                    }
                     if (IsKeyPressed(KEY_R) && podeUsarSuperTiro(&jogo.jogador)) {
                         jogo.jogador.acaoEscolhida = SUPER_TIRO;
                         jogo.jogadorEscolheu = true;
