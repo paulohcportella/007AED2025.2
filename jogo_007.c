@@ -107,6 +107,8 @@ typedef struct {
     Texture2D spriteEspiaoDir;
     Texture2D spriteEspiaoEsq;
     Texture2D spriteCPU;
+    Texture2D fundoCidade;
+    Music musicaFundo;
 } Jogo;
 
 typedef struct {
@@ -261,29 +263,29 @@ void insertionSort(PlayerStats stats[], int n) {
 }
 
 void inicializarJogo(Jogo *jogo) {
-    strcpy(jogo->jogador.nome, "Jogador");
     jogo->jogador.vida = 3;
     criarPilha(&jogo->jogador.municoes);
     jogo->jogador.acaoEscolhida = NENHUMA;
-    jogo->jogador.posX = 200;
+    jogo->jogador.posX = 300;
     jogo->jogador.posY = 400;
     jogo->jogador.defendendo = false;
     jogo->jogador.atirando = false;
     jogo->jogador.carregando = false;
     jogo->jogador.superTiro = false;
     jogo->jogador.contadorCarregamentos = 0;
+    strcpy(jogo->jogador.nome, "Jogador");
     
-    strcpy(jogo->computador.nome, "CPU");
     jogo->computador.vida = 3;
     criarPilha(&jogo->computador.municoes);
     jogo->computador.acaoEscolhida = NENHUMA;
-    jogo->computador.posX = 950;
+    jogo->computador.posX = 900;
     jogo->computador.posY = 400;
     jogo->computador.defendendo = false;
     jogo->computador.atirando = false;
     jogo->computador.carregando = false;
     jogo->computador.superTiro = false;
     jogo->computador.contadorCarregamentos = 0;
+    strcpy(jogo->computador.nome, "CPU");
     
     jogo->bala.ativa = false;
     jogo->bala.acertou = false;
@@ -293,15 +295,15 @@ void inicializarJogo(Jogo *jogo) {
     jogo->rodada = 0;
     jogo->estado = MENU_PRINCIPAL;
     jogo->estadoAntesPausa = MENU_PRINCIPAL;
+    strcpy(jogo->mensagem, "");
     jogo->tempoMensagem = 0;
     jogo->tempoContagem = 0;
     jogo->contagemNum = 0;
     jogo->pontuacaoFinal = 0;
     jogo->rankingHead = NULL;
-    jogo->jogadorEscolheu = false;
-    strcpy(jogo->mensagem, "");
     strcpy(jogo->nomeInput, "");
     jogo->inputIndex = 0;
+    jogo->jogadorEscolheu = false;
     
     carregarRanking(&jogo->rankingHead);
 }
@@ -331,70 +333,68 @@ void resetarJogo(Jogo *jogo) {
     jogo->bala.animacao = 0;
     
     jogo->rodada = 0;
-    jogo->tempoContagem = 0;
-    jogo->contagemNum = 0;
-    jogo->jogadorEscolheu = false;
     strcpy(jogo->mensagem, "");
     jogo->tempoMensagem = 0;
+    jogo->tempoContagem = 0;
+    jogo->contagemNum = 0;
     jogo->pontuacaoFinal = 0;
+    jogo->jogadorEscolheu = false;
+}
+
+bool podeUsarSuperTiro(Jogador *jogador) {
+    return tamanho(&jogador->municoes) >= MUNICOES_SUPER_TIRO;
+}
+
+Acao decidirAcaoComputador(Jogo *jogo) {
+    int balasJogador = tamanho(&jogo->jogador.municoes);
+    int balasCPU = tamanho(&jogo->computador.municoes);
+    
+    if (jogo->jogador.contadorCarregamentos >= 2 && balasCPU >= 1) {
+        if (rand() % 100 < 60) return ATIRAR;
+    }
+    
+    if (balasJogador >= 1 && balasCPU < 3) {
+        if (rand() % 100 < 50) return DEFENDER;
+    }
+    
+    if (balasCPU < 2) {
+        return CARREGAR;
+    }
+    
+    if (balasCPU >= 1 && balasJogador < 2) {
+        return ATIRAR;
+    }
+    
+    if (balasCPU >= 3) {
+        if (rand() % 100 < 70) return ATIRAR;
+    }
+    
+    return CARREGAR;
 }
 
 const char* acaoParaString(Acao acao) {
     switch (acao) {
         case CARREGAR: return "CARREGOU";
         case ATIRAR: return "ATIROU";
-        case SUPER_TIRO: return "SUPER TIRO!";
         case DEFENDER: return "DEFENDEU";
-        case NENHUMA: return "NAO FEZ NADA";
-        default: return "---";
+        case SUPER_TIRO: return "SUPER TIRO!";
+        case NENHUMA: return "NADA";
+        default: return "???";
     }
 }
 
 void definirMensagem(Jogo *jogo, const char *msg) {
     strcpy(jogo->mensagem, msg);
-    jogo->tempoMensagem = 3.0f;
-}
-
-bool podeUsarSuperTiro(Jogador *jogador) {
-    return (tamanho(&jogador->municoes) >= MUNICOES_SUPER_TIRO);
-}
-
-Acao decidirAcaoComputador(Jogo *jogo) {
-    int municoesJogador = tamanho(&jogo->jogador.municoes);
-    int municoesComputador = tamanho(&jogo->computador.municoes);
-    
-    if (!isEmpty(&jogo->computador.municoes)) {
-        if (municoesJogador > 0 && rand() % 100 < 40) {
-            return DEFENDER;
-        }
-        if (rand() % 100 < 80) {
-            return ATIRAR;
-        }
-    }
-    
-    if (municoesComputador < 2) {
-        return CARREGAR;
-    }
-    
-    if (municoesJogador >= 3) {
-        if (rand() % 100 < 60) {
-            return DEFENDER;
-        }
-    }
-    
-    return CARREGAR;
+    jogo->tempoMensagem = 2.5f;
 }
 
 int calcularPontuacao(Jogo *jogo) {
     int pontos = 0;
     
     if (jogo->jogador.vida > 0) {
-        pontos += 1000;
-        pontos += jogo->jogador.vida * 200;
-        pontos += tamanho(&jogo->jogador.municoes) * 50;
-        
-        if (jogo->rodada <= 5) pontos += 500;
-        else if (jogo->rodada <= 10) pontos += 300;
+        pontos = jogo->rodada * 50;
+        if (jogo->rodada <= 5) pontos += 200;
+        else if (jogo->rodada <= 10) pontos += 150;
         else if (jogo->rodada <= 15) pontos += 100;
     } else {
         pontos = jogo->rodada * 10;
@@ -548,18 +548,17 @@ void desenharBala(Jogo *jogo) {
         DrawCircle((int)jogo->bala.x, (int)jogo->bala.y, raio * 0.4f, (Color){255, 255, 100, 255});
         
         for (int i = 0; i < 8; i++) {
-            float angulo = (jogo->bala.animacao + i * 0.785f);
-            float dist = raio + sin(angulo * 3) * 5;
-            float fx = jogo->bala.x + cos(angulo) * dist;
-            float fy = jogo->bala.y + sin(angulo) * dist;
-            DrawCircle((int)fx, (int)fy, 5, (Color){255, 150, 0, 180});
+            float angulo = (jogo->bala.animacao * 10 + i * 45) * DEG2RAD;
+            float dist = raio + 10;
+            DrawCircle(
+                (int)(jogo->bala.x + cos(angulo) * dist),
+                (int)(jogo->bala.y + sin(angulo) * dist),
+                4, ORANGE
+            );
         }
-        
-        DrawCircle((int)(jogo->bala.x - jogo->bala.velocidade * 2), (int)jogo->bala.y, 8, (Color){255, 100, 0, 100});
-        
     } else {
-        DrawCircle((int)jogo->bala.x, (int)jogo->bala.y, 8, ORANGE);
-        DrawCircle((int)jogo->bala.x, (int)jogo->bala.y, 5, YELLOW);
+        DrawCircle((int)jogo->bala.x, (int)jogo->bala.y, 8, YELLOW);
+        DrawCircle((int)jogo->bala.x, (int)jogo->bala.y, 5, ORANGE);
     }
 }
 
@@ -574,7 +573,7 @@ void desenharPersonagem(Jogo *jogo, float x, float y, Color cor, bool defendendo
         sprite = jogo->spriteEspiaoDir;
     }
     
-    float alturaDesejada = 120.0f;
+    float alturaDesejada = 144.0f;
     float escala = alturaDesejada / sprite.height;
     float largura = sprite.width * escala;
     float altura = sprite.height * escala;
@@ -616,9 +615,6 @@ void desenharMenu(Jogo *jogo) {
     
     DrawRectangle(SCREEN_WIDTH/2 - 200, 460, 400, 70, MAROON);
     DrawText("ESC - SAIR", SCREEN_WIDTH/2 - 80, 485, 30, WHITE);
-    
-    DrawText("Estruturas: PILHA + LISTA DUPLA | Algoritmo: INSERTION SORT", 
-             SCREEN_WIDTH/2 - 300, 640, 18, GRAY);
 }
 
 void desenharEntradaNome(Jogo *jogo) {
@@ -658,7 +654,7 @@ void desenharRegras(Jogo *jogo) {
     DrawText("3. Se NAO escolher, fica VULNERAVEL (sem defesa!)", 120, y, 20, RED);
     y += 45;
     
-    DrawText("ACOES (PILHA de municoes):", 100, y, 23, YELLOW);
+    DrawText("ACOES:", 100, y, 23, YELLOW);
     y += 30;
     DrawText("Q - CARREGAR: +1 bala (maximo 6)", 120, y, 20, WHITE);
     y += 28;
@@ -701,6 +697,12 @@ void desenharPausa(Jogo *jogo) {
 void desenharJogo(Jogo *jogo) {
     ClearBackground((Color){35, 35, 45, 255});
     
+    float escalaFundo = (float)SCREEN_HEIGHT / jogo->fundoCidade.height;
+    float larguraFundo = jogo->fundoCidade.width * escalaFundo;
+    float posXFundo = (SCREEN_WIDTH - larguraFundo) / 2;
+    
+    DrawTextureEx(jogo->fundoCidade, (Vector2){posXFundo, 0}, 0, escalaFundo, WHITE);
+    
     DrawRectangle(0, 550, SCREEN_WIDTH, 150, (Color){90, 70, 50, 255});
     
     DrawText(TextFormat("RODADA %d", jogo->rodada), SCREEN_WIDTH/2 - 80, 20, 30, YELLOW);
@@ -712,7 +714,7 @@ void desenharJogo(Jogo *jogo) {
         else if (jogo->contagemNum == 2) texto = "00...";
         else if (jogo->contagemNum == 3) texto = "007!";
         
-        DrawText(texto, SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 100, tamanhoTexto, RED);
+        DrawText(texto, SCREEN_WIDTH/2 - 150, SCREEN_HEIGHT/2 - 150, tamanhoTexto, RED);
     }
     
     DrawRectangle(50, 70, 350, 180, (Color){50, 35, 25, 200});
@@ -750,7 +752,7 @@ void desenharJogo(Jogo *jogo) {
                        jogo->computador.defendendo, jogo->computador.atirando, 
                        jogo->computador.carregando, jogo->computador.superTiro, true);
     
-    DrawText("VS", SCREEN_WIDTH/2 - 35, 300, 50, YELLOW);
+    DrawText("VS", SCREEN_WIDTH/2 - 35, 180, 50, YELLOW);
     
     desenharBala(jogo);
     
@@ -776,8 +778,8 @@ void desenharJogo(Jogo *jogo) {
     }
     
     if (jogo->tempoMensagem > 0) {
-        DrawRectangle(SCREEN_WIDTH/2 - 350, 240, 700, 70, (Color){0, 0, 0, 230});
-        DrawText(jogo->mensagem, SCREEN_WIDTH/2 - 330, 255, 26, YELLOW);
+        DrawRectangle(SCREEN_WIDTH/2 - 350, 515, 700, 50, (Color){0, 0, 0, 230});
+        DrawText(jogo->mensagem, SCREEN_WIDTH/2 - 330, 525, 24, YELLOW);
     }
     
     DrawText("P - Pausar | O - Menu", 20, 670, 18, LIGHTGRAY);
@@ -799,7 +801,7 @@ void desenharScore(Jogo *jogo) {
     
     DrawText(TextFormat("Rodadas: %d", jogo->rodada), SCREEN_WIDTH/2 - 90, 210, 25, WHITE);
     
-    DrawText("RANKING (Insertion Sort)", SCREEN_WIDTH/2 - 180, 270, 28, YELLOW);
+    DrawText("RANKING", SCREEN_WIDTH/2 - 90, 270, 28, YELLOW);
     
     int total = tamanhoRanking(jogo->rankingHead);
     if (total > 0) {
@@ -831,7 +833,7 @@ void desenharScore(Jogo *jogo) {
     }
     
     DrawRectangle(SCREEN_WIDTH/2 - 160, 560, 320, 50, DARKGREEN);
-    DrawText("ENTER - Jogar Novamente", SCREEN_WIDTH/2 - 140, 575, 20, WHITE);
+    DrawText("ESPACO - Jogar Novamente", SCREEN_WIDTH/2 - 140, 575, 20, WHITE);
     
     DrawRectangle(SCREEN_WIDTH/2 - 160, 625, 320, 50, DARKBLUE);
     DrawText("O - Menu", SCREEN_WIDTH/2 - 50, 640, 20, WHITE);
@@ -849,9 +851,30 @@ int main(void) {
     jogo.spriteEspiaoDir = LoadTexture("assets/espiao_esquerda.png");
     jogo.spriteEspiaoEsq = LoadTexture("assets/espiao_direita.png");
     jogo.spriteCPU = LoadTexture("assets/espiao_cpu.png");
+    jogo.fundoCidade = LoadTexture("assets/fundo_cidade.png");
+    
+    InitAudioDevice();
+    
+    if (!IsAudioDeviceReady()) {
+        printf("Aviso: Audio nao disponivel (comum no WSL)\n");
+        printf("O jogo funcionara normalmente sem musica.\n");
+        jogo.musicaFundo.stream.buffer = NULL;
+    } else {
+        jogo.musicaFundo = LoadMusicStream("assets/musica_fundo.mp3");
+        
+        if (jogo.musicaFundo.stream.buffer != NULL) {
+            jogo.musicaFundo.looping = true;
+            SetMusicVolume(jogo.musicaFundo, 0.5f);
+            PlayMusicStream(jogo.musicaFundo);
+        }
+    }
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
+        
+        if (jogo.musicaFundo.stream.buffer != NULL) {
+            UpdateMusicStream(jogo.musicaFundo);
+        }
 
         if (jogo.tempoMensagem > 0) {
             jogo.tempoMensagem -= dt;
@@ -868,6 +891,9 @@ int main(void) {
                 }
                 if (IsKeyPressed(KEY_TWO)) {
                     jogo.estado = REGRAS;
+                }
+                if (jogo.musicaFundo.stream.buffer != NULL && !IsMusicStreamPlaying(jogo.musicaFundo)) {
+                    PlayMusicStream(jogo.musicaFundo);
                 }
                 break;
 
@@ -927,6 +953,9 @@ int main(void) {
                 if (IsKeyPressed(KEY_P)) {
                     jogo.estadoAntesPausa = jogo.estado;
                     jogo.estado = PAUSADO;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PauseMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
@@ -964,6 +993,9 @@ int main(void) {
                 if (IsKeyPressed(KEY_P)) {
                     jogo.estadoAntesPausa = jogo.estado;
                     jogo.estado = PAUSADO;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PauseMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
@@ -978,6 +1010,9 @@ int main(void) {
                 if (IsKeyPressed(KEY_P)) {
                     jogo.estadoAntesPausa = jogo.estado;
                     jogo.estado = PAUSADO;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PauseMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
@@ -995,6 +1030,9 @@ int main(void) {
                                        jogo.pontuacaoFinal, vit, der, jogo.rodada);
                         salvarRanking(jogo.rankingHead);
                         jogo.estado = SCORE;
+                        if (jogo.musicaFundo.stream.buffer != NULL) {
+                            StopMusicStream(jogo.musicaFundo);
+                        }
                     } else {
                         jogo.estado = ESPERANDO_007;
                         jogo.tempoContagem = 1.0f;
@@ -1005,6 +1043,9 @@ int main(void) {
                 if (IsKeyPressed(KEY_P)) {
                     jogo.estadoAntesPausa = jogo.estado;
                     jogo.estado = PAUSADO;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PauseMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
@@ -1014,20 +1055,32 @@ int main(void) {
             case PAUSADO:
                 if (IsKeyPressed(KEY_P)) {
                     jogo.estado = jogo.estadoAntesPausa;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        ResumeMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        ResumeMusicStream(jogo.musicaFundo);
+                    }
                 }
                 break;
 
             case SCORE:
-                if (IsKeyPressed(KEY_ENTER)) {
+                if (IsKeyPressed(KEY_SPACE)) {
                     jogo.inputIndex = 0;
                     strcpy(jogo.nomeInput, "");
                     jogo.estado = ENTRADA_NOME;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PlayMusicStream(jogo.musicaFundo);
+                    }
                 }
                 if (IsKeyPressed(KEY_O)) {
                     jogo.estado = MENU_PRINCIPAL;
+                    if (jogo.musicaFundo.stream.buffer != NULL) {
+                        PlayMusicStream(jogo.musicaFundo);
+                    }
                 }
                 break;
         }
@@ -1049,9 +1102,15 @@ int main(void) {
     salvarRanking(jogo.rankingHead);
     limparRanking(&jogo.rankingHead);
     
+    if (jogo.musicaFundo.stream.buffer != NULL) {
+        UnloadMusicStream(jogo.musicaFundo);
+    }
+    CloseAudioDevice();
+    
     UnloadTexture(jogo.spriteEspiaoDir);
     UnloadTexture(jogo.spriteEspiaoEsq);
     UnloadTexture(jogo.spriteCPU);
+    UnloadTexture(jogo.fundoCidade);
     
     CloseWindow();
 
