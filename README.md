@@ -62,3 +62,9 @@ Este projeto foi desenvolvido pela seguinte equipe:
 3.  **Duelo:** Utilize as teclas `Q`, `W`, `E` e `R` para escolher sua ação antes que o tempo acabe.
 4.  **Fim do Jogo:**
     * Na tela de pontuação (`SCORE`), pressione **ENTER** para recomeçar o duelo (entrando o nome novamente) ou **p** para pausar o jogo ,e **O** para voltar ao Menu Principal.
+
+---
+
+## Video do jogo funcionando.
+
+* [![Vídeo de demonstração](https://img.youtube.com/vi/3scZY5xjT50/0.jpg)](https://youtu.be/3scZY5xjT50)
