@@ -65,6 +65,13 @@ Este projeto foi desenvolvido pela seguinte equipe:
 
 ---
 
+## Instruções de compilação
+
+1 * Deve se usar WSL e GCC.
+2 * Rode o comando de compialção **Make**.
+  * E em seguida o comando **Make run**.
+
+---
 ## Video do jogo funcionando.
 
 * [![Vídeo de demonstração](https://img.youtube.com/vi/3scZY5xjT50/0.jpg)](https://youtu.be/3scZY5xjT50)
